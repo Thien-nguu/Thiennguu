@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>THIÊN NGƯU BAY QUA BIỂN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            background-color: #020617;
+            color: #ffffff;
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+        }
+        .custom-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #f59e0b;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-2 bg-slate-950">
+
+    <div class="relative w-full max-w-lg flex flex-col items-center">
+        <!-- Header -->
+        <header class="text-center mb-2 z-10 w-full">
+            <h1 class="text-2xl sm:text-3xl font-black text-amber-400 tracking-wider uppercase drop-shadow-md">
+                THIÊN NGƯU BAY QUA BIỂN
+            </h1>
+            <p class="text-xs sm:text-sm text-cyan-200 font-bold">
+                Chạm để đập cánh • Bay qua các đảo • Bảng xếp hạng Online!
+            </p>
+        </header>
+
+        <!-- Khung Game Chính -->
+        <div class="relative w-full flex justify-center items-center overflow-hidden rounded-2xl border-4 border-amber-500/70 shadow-2xl bg-sky-950 aspect-[3/4]">
+            <canvas id="gameCanvas" class="w-full h-full cursor-pointer"></canvas>
+
+            <!-- Màn Hình Bắt Đầu -->
+            <div id="startScreen" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-20">
+                <div class="w-20 h-20 mb-3 relative flex items-center justify-center bg-amber-500/20 rounded-full border-2 border-amber-400 shadow-lg">
+                    <span class="text-5xl">🐃</span>
+                </div>
+                <h2 class="text-2xl font-black text-amber-300 mb-2 uppercase">
+                    THIÊN NGƯU BAY BIỂN
+                </h2>
+                
+                <div class="w-full max-w-xs mb-4">
+                    <label class="block text-xs font-bold text-cyan-300 mb-1 text-left">ĐĂNG KÝ NICKNAME CỦA BẠN:</label>
+                    <input type="text" id="nicknameInput" maxlength="12" placeholder="Nhập nickname..." 
+                           class="w-full px-4 py-2 bg-slate-900 border-2 border-amber-500/80 rounded-xl text-white font-bold text-center focus:outline-none focus:border-yellow-300">
+                </div>
+
+                <button id="startBtn" class="px-8 py-3 bg-gradient-to-r from-red-600 to-amber-500 text-white font-black text-base rounded-full shadow-lg border-2 border-yellow-300 transform transition active:scale-95 hover:brightness-110">
+                    BẮT ĐẦU BAY (TAP / SPACE)
+                </button>
+            </div>
+
+            <!-- Màn Hình Thua & Bảng Xếp Hạng -->
+            <div id="gameOverScreen" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-3 text-center z-30">
+                <div class="w-full max-w-sm bg-slate-900 border-2 border-amber-500/80 rounded-2xl p-3.5 shadow-2xl flex flex-col max-h-[92%]">
+                    <h2 class="text-lg font-black text-red-500 mb-1 uppercase tracking-wide">
+                        KẾT THÚC HÀNH TRÌNH
+                    </h2>
+                    
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <div class="bg-slate-800 p-1.5 rounded-xl border border-amber-500/30">
+                            <p class="text-[9px] text-gray-400 font-bold uppercase">Điểm Lần Bay</p>
+                            <span id="finalScore" class="text-lg font-black text-amber-400">0</span>
+                        </div>
+                        <div class="bg-slate-800 p-1.5 rounded-xl border border-yellow-500/30">
+                            <p class="text-[9px] text-gray-400 font-bold uppercase">Kỷ Lục Cá Nhân</p>
+                            <span id="bestScore" class="text-lg font-black text-yellow-300">0</span>
+                        </div>
+                    </div>
+
+                    <!-- BẢNG XẾP HẠNG TOP 10 -->
+                    <div class="bg-slate-950/60 p-2 rounded-xl border border-cyan-500/30 mb-2 flex-1 flex flex-col overflow-hidden">
+                        <h3 class="text-[10px] font-black text-cyan-300 uppercase mb-1 flex items-center justify-center gap-1">
+                            🏆 TOP 10 CAO THỦ (NICKNAME) 🏆
+                        </h3>
+                        <div class="overflow-y-auto custom-scroll flex-1 pr-1">
+                            <ul id="leaderboardList" class="text-[11px] space-y-1 text-gray-300 text-left">
+                                <li class="text-center text-gray-400">Đang tải xếp hạng...</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- BẢNG VINH DANH VƯỢT HẾT CÁC ĐẢO -->
+                    <div class="bg-emerald-950/40 p-2 rounded-xl border border-emerald-500/40 mb-2 max-h-28 flex flex-col overflow-hidden">
+                        <h3 class="text-[10px] font-black text-emerald-400 uppercase mb-1 flex items-center justify-center gap-1">
+                            🌟 BẢNG VÀNG: ĐÃ VƯỢT HẾT CÁC ĐẢO 🌟
+                        </h3>
+                        <div class="overflow-y-auto custom-scroll flex-1 pr-1">
+                            <ul id="winnersList" class="text-[10px] space-y-1 text-emerald-200 text-left">
+                                <li class="text-center text-gray-400">Chưa có ai vượt qua tất cả đảo...</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Các nút bấm -->
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <button id="restartBtn" class="py-2 bg-gradient-to-r from-amber-500 to-red-600 text-white font-black text-xs rounded-full border border-yellow-300 shadow-md transform transition active:scale-95 hover:brightness-110">
+                            BAY LẠI
+                        </button>
+                        <button id="donateBtn" class="py-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-black text-xs rounded-full border border-teal-300 shadow-md transform transition active:scale-95 hover:brightness-110 uppercase">
+                            ☕ ỦNG HỘ
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- POPUP HIỂN THỊ MÃ QR DONATE -->
+            <div id="donateModal" class="hidden absolute inset-0 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-4 text-center z-50">
+                <div class="w-full max-w-xs bg-slate-900 border-2 border-emerald-500/80 rounded-2xl p-4 shadow-2xl flex flex-col items-center">
+                    <h3 class="text-lg font-black text-emerald-400 mb-1 uppercase tracking-wider flex items-center gap-1">
+                        ☕ ỦNG HỘ TÁC GIẢ
+                    </h3>
+                    <p class="text-[11px] text-gray-300 mb-3">
+                        Quét mã VietQR để ủng hộ phát triển game
+                    </p>
+
+                    <div class="bg-white p-2 rounded-xl shadow-inner mb-3">
+                        <img src="https://img.vietqr.io/image/VCB-0441000615301-compact2.png?accountName=CAO%20DUC%20CHINH&amount=0&addInfo=UNG%20HO%20GAME%20THIEN%20NGUU" 
+                             alt="Mã QR Ung Ho Vietcombank" class="w-48 h-48 object-contain rounded-lg">
+                    </div>
+
+                    <div class="w-full bg-slate-950/80 p-2.5 rounded-xl border border-emerald-500/30 mb-3 text-xs space-y-1">
+                        <p class="text-yellow-300 font-bold">Ngân hàng: <span class="text-white">Vietcombank</span></p>
+                        <p class="text-yellow-300 font-bold">Số TK: <span class="text-white">0441000615301</span></p>
+                        <p class="text-yellow-300 font-bold">Chủ TK: <span class="text-white">CAO DUC CHINH</span></p>
+                    </div>
+
+                    <button id="closeDonateBtn" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-full border border-gray-600 shadow-md transform transition active:scale-95 uppercase">
+                        ✕ ĐÓNG CỬA SỔ
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <footer class="mt-3 text-xs text-cyan-300/80">
+            👉 Nhấn liên tục để giữ Thiên Ngưu bay qua các đảo!
+        </footer>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        // DANH SÁCH ĐẢO VÀ ĐÁ THỰC TẾ (LỌC TRÙNG VÀ BỔ SUNG)
+        const ISLAND_DATA = [
+            // Quần đảo Hoàng Sa
+            { name: "Đảo Hoàng Sa", group: "Q.đáo Hoàng Sa" },
+            { name: "Đảo Phú Lâm", group: "Q.đáo Hoàng Sa" },
+            { name: "Đảo Cây", group: "Q.đáo Hoàng Sa" },
+            { name: "Đảo Quang Hòa", group: "Q.đáo Hoàng Sa" },
+            { name: "Đảo Duy Mộng", group: "Q.đáo Hoàng Sa" },
+            { name: "Đá Bông Bay", group: "Q.đáo Hoàng Sa" },
+
+            // Quần đảo Trường Sa
+            { name: "Đảo Trường Sa Lớn", group: "Q.đáo Trường Sa" },
+            { name: "Đảo Song Tử Tây", group: "Q.đáo Trường Sa" },
+            { name: "Đảo Nam Yết", group: "Q.đáo Trường Sa" },
+            { name: "Đảo Sơn Ca", group: "Q.đáo Trường Sa" },
+            { name: "Đảo Sinh Tồn", group: "Q.đáo Trường Sa" },
+            { name: "Đảo Sinh Tồn Đông", group: "Q.đáo Trường Sa" },
+            { name: "Đảo Phan Vinh", group: "Q.đáo Trường Sa" },
+            { name: "Đảo An Bang", group: "Q.đáo Trường Sa" },
+            { name: "Đảo Trường Sa Đông", group: "Q.đáo Trường Sa" },
+            { name: "Đảo Ba Bình", group: "Q.đáo Trường Sa" },
+            { name: "Đá Chữ Thập", group: "Q.đáo Trường Sa" },
+            { name: "Đá Vành Khăn", group: "Q.đáo Trường Sa" },
+            { name: "Đá Subi", group: "Q.đáo Trường Sa" },
+            { name: "Đá Ga Ven", group: "Q.đáo Trường Sa" },
+            { name: "Đá Tư Nghĩa", group: "Q.đáo Trường Sa" },
+            { name: "Đá Gạc Ma", group: "Q.đáo Trường Sa" },
+            { name: "Bãi Châu Viên", group: "Q.đáo Trường Sa" },
+            { name: "Đá Tây", group: "Q.đáo Trường Sa" },
+            { name: "Đá Lớn", group: "Q.đáo Trường Sa" },
+            { name: "Đá Lát", group: "Q.đáo Trường Sa" },
+            { name: "Đá Đông", group: "Q.đáo Trường Sa" },
+            { name: "Đá Núi Le", group: "Q.đáo Trường Sa" },
+            { name: "Đá Tốc Tan", group: "Q.đáo Trường Sa" },
+            { name: "Đá Hiền Hòa", group: "Q.đáo Trường Sa" },
+            { name: "Đá Núi Thị", group: "Q.đáo Trường Sa" },
+            { name: "Đá Nam", group: "Q.đáo Trường Sa" },
+            { name: "Đá Cô Lin", group: "Q.đáo Trường Sa" },
+            { name: "Đá Len Đao", group: "Q.đáo Trường Sa" },
+            { name: "Đá Thuyền Chài", group: "Q.đáo Trường Sa" }
+        ];
+
+        const TOTAL_ISLANDS_COUNT = ISLAND_DATA.length; // Tổng số đảo/đá hiện tại (35)
+
+        // KẾT NỐI FIREBASE DATABASE
+        const firebaseConfig = {
+            databaseURL: "https://thien-nguu-default-rtdb.asia-southeast1.firebasedatabase.app"
+        };
+        try {
+            firebase.initializeApp(firebaseConfig);
+        } catch (e) {}
+        const database = typeof firebase !== 'undefined' && firebase.database ? firebase.database() : null;
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const V_WIDTH = 480;
+        const V_HEIGHT = 640;
+        canvas.width = V_WIDTH;
+        canvas.height = V_HEIGHT;
+
+        let playerNickname = localStorage.getItem('thiennguu_nickname') || '';
+        if (playerNickname) {
+            document.getElementById('nicknameInput').value = playerNickname;
+        }
+
+        // ÂM THANH WEBAUDIO API
+        let audioCtx = null;
+        let isBgmPlaying = false;
+        let nextNoteTime = 0;
+        let currentNoteIndex = 0;
+        let bgmIntervalId = null;
+
+        const melody = [
+            { freq: 523.25, duration: 0.20 },
+            { freq: 523.25, duration: 0.20 },
+            { freq: 440.00, duration: 0.25 },
+            { freq: 523.25, duration: 0.20 },
+            { freq: 659.25, duration: 0.30 },
+            { freq: 523.25, duration: 0.20 },
+            { freq: 440.00, duration: 0.25 },
+            { freq: 523.25, duration: 0.20 },
+            { freq: 523.25, duration: 0.40 }
+        ];
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playFlapSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.12);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.12);
+        }
+
+        function playScoreSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.08);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.25);
+        }
+
+        function playHitSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(30, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        function scheduleNote(note, time) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(note.freq, time);
+            gain.gain.setValueAtTime(0.12, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + note.duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(time);
+            osc.stop(time + note.duration);
+        }
+
+        function scheduler() {
+            while (nextNoteTime < audioCtx.currentTime + 0.1) {
+                scheduleNote(melody[currentNoteIndex], nextNoteTime);
+                nextNoteTime += melody[currentNoteIndex].duration + 0.05;
+                currentNoteIndex = (currentNoteIndex + 1) % melody.length;
+            }
+        }
+
+        function startBGM() {
+            if (isBgmPlaying) return;
+            isBgmPlaying = true;
+            currentNoteIndex = 0;
+            nextNoteTime = audioCtx.currentTime + 0.05;
+            bgmIntervalId = setInterval(scheduler, 25);
+        }
+
+        function stopBGM() {
+            isBgmPlaying = false;
+            if (bgmIntervalId) {
+                clearInterval(bgmIntervalId);
+                bgmIntervalId = null;
+            }
+        }
+
+        let gameState = 'START';
+        let score = 0;
+        let pipes = [];
+        let frameCount = 0;
+        let waveOffset = 0;
+
+        const thienNguuSVG = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+            <g>
+                <path d="M 120 420 C 150 380, 200 370, 240 390 C 270 340, 340 330, 390 370 C 420 380, 440 410, 420 430 C 350 450, 200 450, 120 420 Z" fill="#d97706" stroke="#fef08a" stroke-width="3"/>
+                <path d="M 160 400 C 190 360, 250 360, 280 390 C 310 350, 360 350, 390 390 C 330 420, 210 420, 160 400 Z" fill="#f59e0b"/>
+                <path d="M 110 330 Q 80 280 100 210 Q 150 170 230 180 L 290 280 Q 250 370 190 340 Z" fill="#0f172a"/>
+                <path d="M 110 330 C 120 360, 140 400, 150 420 L 170 410 C 160 380, 140 350, 130 320 Z" fill="#1e293b"/>
+                <path d="M 170 330 C 180 360, 200 400, 210 420 L 230 410 C 220 380, 200 350, 190 320 Z" fill="#0f172a"/>
+                <path d="M 280 270 C 310 300, 350 330, 380 340 L 390 320 C 360 300, 330 270, 300 240 Z" fill="#1e293b"/>
+                <path d="M 320 230 C 350 250, 410 270, 430 260 L 430 240 C 400 240, 360 220, 330 200 Z" fill="#0f172a"/>
+                <path d="M 100 210 C 70 200, 50 230, 70 260 C 80 280, 60 300, 50 280 C 40 250, 70 180, 110 190 Z" fill="#0f172a"/>
+                <path d="M 170 180 C 130 110, 180 40, 260 50 C 220 100, 200 140, 190 180 Z" fill="#d97706" stroke="#fef08a" stroke-width="2"/>
+                <path d="M 190 170 C 150 110, 210 50, 290 60 C 250 110, 230 140, 210 170 Z" fill="#b45309"/>
+                <path d="M 180 180 C 110 80, 190 20, 300 30 C 310 35, 270 70, 260 90 C 280 90, 320 50, 340 60 C 310 90, 280 110, 280 120 C 300 110, 350 80, 370 90 C 330 120, 270 150, 230 180 Z" fill="#f59e0b" stroke="#fde047" stroke-width="3"/>
+                <path d="M 200 160 Q 230 100 280 80 M 210 170 Q 250 120 310 100 M 220 175 Q 270 130 340 120" stroke="#fef08a" stroke-width="2" fill="none"/>
+                <path d="M 250 170 C 280 140, 320 110, 360 110 C 390 110, 410 130, 400 150 C 370 170, 310 200, 270 190 Z" fill="#0f172a"/>
+                <path d="M 330 120 C 320 80, 280 60, 240 65 C 270 75, 300 85, 320 110 Z" fill="#0f172a" stroke="#f59e0b" stroke-width="2"/>
+                <path d="M 340 115 C 340 70, 300 40, 250 45 C 290 55, 320 70, 335 105 Z" fill="#1e293b" stroke="#fde047" stroke-width="2"/>
+                <ellipse cx="370" cy="135" rx="8" ry="5" fill="#ef4444"/>
+                <ellipse cx="371" cy="135" rx="4" ry="2" fill="#fde047"/>
+                <circle cx="280" cy="190" r="22" fill="#d97706" stroke="#fde047" stroke-width="3"/>
+                <circle cx="280" cy="190" r="15" fill="none" stroke="#fde047" stroke-width="2" stroke-dasharray="4,3"/>
+                <circle cx="280" cy="190" r="6" fill="#fde047"/>
+            </g>
+        </svg>`;
+
+        const buffaloImg = new Image();
+        buffaloImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(thienNguuSVG);
+
+        class Buffalo {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = 100;
+                this.y = V_HEIGHT / 2;
+                this.velocity = 0;
+                this.gravity = 0.42;
+                this.jumpPower = -7.5;
+                this.width = 65;
+                this.height = 65;
+                this.rotation = 0;
+            }
+            flap() {
+                this.velocity = this.jumpPower;
+                playFlapSound();
+            }
+            update() {
+                this.velocity += this.gravity;
+                this.y += this.velocity;
+                this.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 6, this.velocity * 0.08));
+                if (this.y + this.height / 2 >= V_HEIGHT - 35 || this.y - this.height / 2 <= 0) {
+                    endGame();
+                }
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.drawImage(buffaloImg, -this.width / 2, -this.height / 2, this.width, this.height);
+                ctx.restore();
+            }
+        }
+
+        class Pipe {
+            constructor(x) {
+                this.x = x;
+                this.width = 110;
+                this.gap = 160;
+                this.topHeight = Math.floor(Math.random() * (V_HEIGHT - this.gap - 220)) + 50;
+                this.bottomY = this.topHeight + this.gap;
+                this.passed = false;
+                
+                const randomIsland = ISLAND_DATA[Math.floor(Math.random() * ISLAND_DATA.length)];
+                this.name = randomIsland.name;
+                this.group = randomIsland.group;
+            }
+            update() { this.x -= 2.5; }
+            draw() {
+                ctx.fillStyle = '#0369a1';
+                ctx.fillRect(this.x + 15, 0, this.width - 30, this.topHeight);
+                ctx.fillStyle = '#0284c7';
+                ctx.fillRect(this.x + 10, this.topHeight - 15, this.width - 20, 15);
+
+                const islandX = this.x;
+                const islandY = this.bottomY;
+                const islandW = this.width;
+
+                ctx.fillStyle = '#0f766e';
+                ctx.beginPath();
+                ctx.moveTo(islandX - 10, V_HEIGHT);
+                ctx.lineTo(islandX, islandY + 20);
+                ctx.lineTo(islandX + 15, islandY);
+                ctx.lineTo(islandX + islandW - 15, islandY);
+                ctx.lineTo(islandX + islandW, islandY + 20);
+                ctx.lineTo(islandX + islandW + 10, V_HEIGHT);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = '#16a34a';
+                ctx.beginPath();
+                ctx.ellipse(islandX + islandW / 2, islandY + 4, islandW / 2 - 5, 10, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 11px Montserrat, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.name, islandX + islandW / 2, islandY + 32);
+
+                ctx.fillStyle = '#fde047';
+                ctx.font = 'bold 9px Montserrat, sans-serif';
+                ctx.fillText(this.group, islandX + islandW / 2, islandY + 46);
+
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(islandX + 10, islandY + 54, islandW - 20, 16);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 9px Montserrat, sans-serif';
+                ctx.fillText('THUỘC VIỆT NAM', islandX + islandW / 2, islandY + 66);
+
+                const fx = islandX + islandW / 2;
+                const fy = islandY - 6;
+
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(fx, fy);
+                ctx.lineTo(fx, fy - 32);
+                ctx.stroke();
+
+                ctx.fillStyle = '#da251d';
+                ctx.fillRect(fx, fy - 32, 22, 14);
+
+                ctx.fillStyle = '#ffff00';
+                ctx.font = '10px sans-serif';
+                ctx.fillText('★', fx + 11, fy - 21);
+            }
+        }
+
+        const buffalo = new Buffalo();
+
+        function drawEastSeaBackground() {
+            const bgGradient = ctx.createLinearGradient(0, 0, 0, V_HEIGHT);
+            bgGradient.addColorStop(0, '#0c4a6e');
+            bgGradient.addColorStop(0.6, '#075985');
+            bgGradient.addColorStop(1, '#0284c7');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+
+            ctx.fillStyle = 'rgba(22, 101, 52, 0.35)';
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.bezierCurveTo(80, 120, 20, 280, 100, 420);
+            ctx.bezierCurveTo(120, 480, 60, 560, 0, V_HEIGHT);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(250, 204, 21, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            waveOffset += 0.05;
+            ctx.fillStyle = '#0369a1';
+            ctx.beginPath();
+            ctx.moveTo(0, V_HEIGHT - 35);
+            for (let x = 0; x <= V_WIDTH; x += 10) {
+                const y = Math.sin(x * 0.02 + waveOffset) * 6 + (V_HEIGHT - 35);
+                ctx.lineTo(x, y);
+            }
+            ctx.lineTo(V_WIDTH, V_HEIGHT);
+            ctx.lineTo(0, V_HEIGHT);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.beginPath();
+            ctx.moveTo(0, V_HEIGHT - 32);
+            for (let x = 0; x <= V_WIDTH; x += 15) {
+                const y = Math.sin(x * 0.03 + waveOffset * 1.2) * 4 + (V_HEIGHT - 32);
+                ctx.lineTo(x, y);
+            }
+            ctx.lineTo(V_WIDTH, V_HEIGHT);
+            ctx.lineTo(0, V_HEIGHT);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // LƯU ĐIỂM SỐ VÀO LOCALSTORAGE HOẶC FIREBASE
+        const scoreStorageKey = 'thiennguu_local_scores_v2';
+        function getStoredScores() {
+            try {
+                return JSON.parse(localStorage.getItem(scoreStorageKey)) || {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function saveOnlineScore(nickname, currentScore) {
+            let userBest = parseInt(localStorage.getItem('thiennguu_best') || '0');
+            if (currentScore > userBest) {
+                userBest = currentScore;
+                localStorage.setItem('thiennguu_best', userBest.toString());
+            }
+            document.getElementById('bestScore').innerText = userBest;
+
+            if (nickname && currentScore > 0) {
+                const isFullClear = currentScore >= TOTAL_ISLANDS_COUNT;
+                
+                // Lưu local
+                const scoresObj = getStoredScores();
+                const existing = scoresObj[nickname] || { score: 0, clearedAll: false };
+                scoresObj[nickname] = {
+                    name: nickname,
+                    score: Math.max(existing.score, currentScore),
+                    clearedAll: existing.clearedAll || isFullClear,
+                    time: Date.now()
+                };
+                localStorage.setItem(scoreStorageKey, JSON.stringify(scoresObj));
+
+                // Lưu Firebase nếu có kết nối
+                if (database) {
+                    database.ref('scores/' + nickname).transaction((currentData) => {
+                        let highest = currentData ? currentData.score : 0;
+                        let newScore = Math.max(highest, currentScore);
+                        let hasCleared = (currentData && currentData.clearedAll) || isFullClear;
+
+                        return {
+                            name: nickname,
+                            score: newScore,
+                            clearedAll: hasCleared,
+                            time: Date.now()
+                        };
+                    });
+                }
+            }
+        }
+
+        function loadOnlineLeaderboard() {
+            const top10ListEl = document.getElementById('leaderboardList');
+            const winnersListEl = document.getElementById('winnersList');
+
+            const renderData = (allPlayers) => {
+                allPlayers.sort((a, b) => b.score - a.score);
+
+                // TOP 10
+                top10ListEl.innerHTML = '';
+                const top10 = allPlayers.slice(0, 10);
+                if (top10.length === 0) {
+                    top10ListEl.innerHTML = '<li class="text-center text-gray-400">Chưa có kỷ lục nào</li>';
+                } else {
+                    top10.forEach((item, idx) => {
+                        const isCurrentPlayer = item.name === playerNickname;
+                        const rankSymbol = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}.`;
+                        top10ListEl.innerHTML += `
+                            <li class="flex justify-between items-center py-0.5 border-b border-gray-800 ${isCurrentPlayer ? 'text-amber-300 font-bold' : ''}">
+                                <span class="truncate max-w-[130px]">${rankSymbol} ${item.name}</span>
+                                <span class="font-black text-cyan-300">${item.score} đảo</span>
+                            </li>
+                        `;
+                    });
+                }
+
+                // HALL OF FAME
+                winnersListEl.innerHTML = '';
+                const winners = allPlayers.filter(p => p.score >= TOTAL_ISLANDS_COUNT || p.clearedAll);
+                if (winners.length === 0) {
+                    winnersListEl.innerHTML = '<li class="text-center text-gray-400">Chưa có ai vượt qua tất cả đảo...</li>';
+                } else {
+                    winners.forEach((item) => {
+                        const isCurrentPlayer = item.name === playerNickname;
+                        winnersListEl.innerHTML += `
+                            <li class="flex justify-between items-center py-0.5 border-b border-emerald-900 ${isCurrentPlayer ? 'text-yellow-300 font-bold' : ''}">
+                                <span class="truncate max-w-[130px]">👑 ${item.name}</span>
+                                <span class="text-emerald-400 font-bold">HOÀN THÀNH 🎉</span>
+                            </li>
+                        `;
+                    });
+                }
+            };
+
+            if (database) {
+                database.ref('scores').once('value').then((snapshot) => {
+                    let allPlayers = [];
+                    snapshot.forEach((child) => {
+                        allPlayers.push(child.val());
+                    });
+                    if (allPlayers.length > 0) {
+                        renderData(allPlayers);
+                    } else {
+                        renderData(Object.values(getStoredScores()));
+                    }
+                }).catch(() => {
+                    renderData(Object.values(getStoredScores()));
+                });
+            } else {
+                renderData(Object.values(getStoredScores()));
+            }
+        }
+
+        function endGame() {
+            gameState = 'GAMEOVER';
+            stopBGM();
+            playHitSound();
+
+            document.getElementById('finalScore').innerText = score;
+            saveOnlineScore(playerNickname, score);
+            loadOnlineLeaderboard();
+
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+
+        function gameLoop() {
+            drawEastSeaBackground();
+
+            if (gameState === 'PLAYING') {
+                frameCount++;
+                if (frameCount % 100 === 0) pipes.push(new Pipe(V_WIDTH));
+
+                buffalo.update();
+
+                for (let i = pipes.length - 1; i >= 0; i--) {
+                    pipes[i].update();
+
+                    if (
+                        buffalo.x + buffalo.width / 3 > pipes[i].x &&
+                        buffalo.x - buffalo.width / 3 < pipes[i].x + pipes[i].width
+                    ) {
+                        if (
+                            buffalo.y - buffalo.height / 3 < pipes[i].topHeight ||
+                            buffalo.y + buffalo.height / 3 > pipes[i].bottomY
+                        ) {
+                            endGame();
+                        }
+                    }
+
+                    if (!pipes[i].passed && pipes[i].x + pipes[i].width < buffalo.x) {
+                        pipes[i].passed = true;
+                        score++;
+                        playScoreSound();
+                    }
+
+                    if (pipes[i].x + pipes[i].width < -20) {
+                        pipes.splice(i, 1);
+                    }
+                }
+
+                pipes.forEach(pipe => pipe.draw());
+                buffalo.draw();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 32px Montserrat, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(score, V_WIDTH / 2, 50);
+
+            } else if (gameState === 'START') {
+                buffalo.draw();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function handleTap(e) {
+            initAudio();
+            if (gameState === 'PLAYING') {
+                buffalo.flap();
+            }
+        }
+
+        function startGame() {
+            const inputVal = document.getElementById('nicknameInput').value.trim();
+            if (!inputVal) {
+                alert("Vui lòng nhập Nickname của bạn để bắt đầu!");
+                return;
+            }
+
+            playerNickname = inputVal;
+            localStorage.setItem('thiennguu_nickname', playerNickname);
+
+            initAudio();
+            buffalo.reset();
+            pipes = [];
+            score = 0;
+            frameCount = 0;
+            gameState = 'PLAYING';
+            startBGM();
+
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('donateModal').classList.add('hidden');
+        }
+
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('restartBtn').addEventListener('click', startGame);
+        canvas.addEventListener('click', handleTap);
+
+        document.getElementById('donateBtn').addEventListener('click', () => {
+            document.getElementById('donateModal').classList.remove('hidden');
+        });
+
+        document.getElementById('closeDonateBtn').addEventListener('click', () => {
+            document.getElementById('donateModal').classList.add('hidden');
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                const donateModal = document.getElementById('donateModal');
+                if (!donateModal.classList.contains('hidden')) {
+                    donateModal.classList.add('hidden');
+                } else if (gameState === 'PLAYING') {
+                    handleTap();
+                } else if (gameState === 'START' || gameState === 'GAMEOVER') {
+                    startGame();
+                }
+            }
+        });
+
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
